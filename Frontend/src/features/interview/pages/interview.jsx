@@ -3,11 +3,40 @@ import { useParams } from "react-router"
 import "../style/interview.scss"
 import { useInterview } from "../hooks/useinterview"
 
+const sectionConfig = {
+    technical: {
+        title: "Technical Questions",
+        navLabel: "Technical Questions",
+        icon: "<>",
+        answerLabel: "Model Answer",
+        empty: "No technical questions available."
+    },
+    behavioral: {
+        title: "Behavioral Questions",
+        navLabel: "Behavioral Questions",
+        icon: "[]",
+        answerLabel: "STAR Answer",
+        empty: "No behavioral questions available."
+    },
+    roadmap: {
+        title: "Road Map",
+        navLabel: "Road Map",
+        icon: "->",
+        empty: "No preparation plan available."
+    }
+}
+
+const getScoreTone = (score) => {
+    if (score >= 75) return "Strong match for this role"
+    if (score >= 50) return "Good base with focused prep"
+    return "Needs focused preparation"
+}
+
 const Interview = () => {
     const { id } = useParams()
     const { currentReport, loading, handleGetReportById } = useInterview()
     const [activeSection, setActiveSection] = useState("technical")
-    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0)
+    const [openItem, setOpenItem] = useState(0)
 
     useEffect(() => {
         handleGetReportById(id)
@@ -16,194 +45,158 @@ const Interview = () => {
     if (loading || !currentReport) {
         return (
             <main className="interview-page">
-                <div style={{ padding: "3rem", textAlign: "center", color: "#888" }}>
+                <div className="interview-shell loading-shell">
                     <h2>Loading your interview strategy...</h2>
                 </div>
             </main>
         )
     }
 
-    const renderContent = () => {
-        if (activeSection === "technical") {
-            if (!currentReport.technicalQuestions || currentReport.technicalQuestions.length === 0) {
-                return <p>No technical questions available.</p>
-            }
-            const q = currentReport.technicalQuestions[activeQuestionIndex]
-            return (
-                <div className="question-detail">
-                    <div className="question-header">
-                        <span className="badge">Technical · Question {activeQuestionIndex + 1}/{currentReport.technicalQuestions.length}</span>
-                    </div>
-                    <h2 className="question-text">{q.question}</h2>
-                    <div className="intention-box">
-                        <span className="label">💡 What they're really asking:</span>
-                        <p>{q.intention}</p>
-                    </div>
-                    <div className="answer-box">
-                        <span className="label">✅ Model Answer:</span>
-                        <p className="answer-text">{q.answer}</p>
-                    </div>
+    const technicalQuestions = currentReport.technicalQuestions || []
+    const behavioralQuestions = currentReport.behavioralQuestions || []
+    const preparationPlan = currentReport.preparationPlan || []
+    const score = currentReport.matchScore || 0
 
-                    <div className="question-nav">
-                        <button
-                            disabled={activeQuestionIndex === 0}
-                            onClick={() => setActiveQuestionIndex(activeQuestionIndex - 1)}
-                        >
-                            ← Previous
-                        </button>
-                        <button
-                            disabled={activeQuestionIndex === currentReport.technicalQuestions.length - 1}
-                            onClick={() => setActiveQuestionIndex(activeQuestionIndex + 1)}
-                        >
-                            Next →
-                        </button>
-                    </div>
-                </div>
-            )
-        }
-
-        if (activeSection === "behavioral") {
-            if (!currentReport.behavioralQuestions || currentReport.behavioralQuestions.length === 0) {
-                return <p>No behavioral questions available.</p>
-            }
-            const q = currentReport.behavioralQuestions[activeQuestionIndex]
-            return (
-                <div className="question-detail">
-                    <div className="question-header">
-                        <span className="badge behavioral">Behavioral · Question {activeQuestionIndex + 1}/{currentReport.behavioralQuestions.length}</span>
-                    </div>
-                    <h2 className="question-text">{q.question}</h2>
-                    <div className="intention-box">
-                        <span className="label">💡 What they're really asking:</span>
-                        <p>{q.intention}</p>
-                    </div>
-                    <div className="answer-box">
-                        <span className="label">✅ STAR Format Answer:</span>
-                        <p className="answer-text">{q.answer}</p>
-                    </div>
-
-                    <div className="question-nav">
-                        <button
-                            disabled={activeQuestionIndex === 0}
-                            onClick={() => setActiveQuestionIndex(activeQuestionIndex - 1)}
-                        >
-                            ← Previous
-                        </button>
-                        <button
-                            disabled={activeQuestionIndex === currentReport.behavioralQuestions.length - 1}
-                            onClick={() => setActiveQuestionIndex(activeQuestionIndex + 1)}
-                        >
-                            Next →
-                        </button>
-                    </div>
-                </div>
-            )
-        }
-
-        if (activeSection === "roadmap") {
-            if (!currentReport.preparationPlan || currentReport.preparationPlan.length === 0) {
-                return <p>No preparation plan available.</p>
-            }
-            return (
-                <div className="roadmap-detail">
-                    <h2>7-Day Preparation Roadmap</h2>
-                    <p className="roadmap-intro">Follow this focused plan to address your skill gaps and maximize interview success.</p>
-                    <div className="roadmap-timeline">
-                        {currentReport.preparationPlan.map((day, idx) => (
-                            <div key={idx} className="day-card">
-                                <div className="day-header">
-                                    <span className="day-number">Day {day.day}</span>
-                                    <span className="day-focus">{day.focus}</span>
-                                </div>
-                                <ul className="tasks-list">
-                                    {day.tasks.map((task, i) => (
-                                        <li key={i}>{task}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )
-        }
+    const switchSection = (section) => {
+        setActiveSection(section)
+        setOpenItem(0)
     }
+
+    const renderQuestionList = (questions, type) => {
+        const config = sectionConfig[type]
+
+        if (!questions.length) {
+            return <p className="empty-state">{config.empty}</p>
+        }
+
+        return (
+            <div className="accordion-list">
+                {questions.map((question, index) => {
+                    const isOpen = openItem === index
+
+                    return (
+                        <article className={`question-row ${isOpen ? "open" : ""}`} key={`${type}-${index}`}>
+                            <button className="question-trigger" onClick={() => setOpenItem(isOpen ? -1 : index)}>
+                                <span className="question-number">{String(index + 1).padStart(2, "0")}</span>
+                                <span className="question-copy">{question.question}</span>
+                                <span className="chevron">{isOpen ? "up" : "down"}</span>
+                            </button>
+
+                            {isOpen && (
+                                <div className="question-panel">
+                                    <div className="insight-block">
+                                        <span className="block-label">What they are testing</span>
+                                        <p>{question.intention}</p>
+                                    </div>
+                                    <div className="answer-block">
+                                        <span className="block-label">{config.answerLabel}</span>
+                                        <p>{question.answer}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </article>
+                    )
+                })}
+            </div>
+        )
+    }
+
+    const renderRoadmap = () => {
+        if (!preparationPlan.length) {
+            return <p className="empty-state">{sectionConfig.roadmap.empty}</p>
+        }
+
+        return (
+            <div className="roadmap-list">
+                {preparationPlan.map((day, index) => (
+                    <article className="roadmap-row" key={`${day.day}-${index}`}>
+                        <div className="day-pill">Day {day.day}</div>
+                        <div className="roadmap-copy">
+                            <h3>{day.focus}</h3>
+                            <ul>
+                                {day.tasks.map((task, taskIndex) => (
+                                    <li key={`${task}-${taskIndex}`}>{task}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    </article>
+                ))}
+            </div>
+        )
+    }
+
+    const activeCount = activeSection === "technical"
+        ? technicalQuestions.length
+        : activeSection === "behavioral"
+            ? behavioralQuestions.length
+            : preparationPlan.length
 
     return (
         <main className="interview-page">
-
-            {/* Header */}
-            <header className="interview-header">
-                <div className="header-content">
-                    <h1>Your Interview Strategy</h1>
-                    <div className="match-score">
-                        <span className="score-label">Match Score</span>
-                        <span className="score-value">{currentReport.matchScore || 0}%</span>
-                    </div>
-                </div>
-            </header>
-
-            <div className="interview-layout">
-
-                {/* Left Sidebar */}
+            <div className="interview-shell">
                 <aside className="sidebar-left">
+                    <p className="panel-kicker">Sections</p>
                     <nav className="section-nav">
-                        <button
-                            className={activeSection === "technical" ? "active" : ""}
-                            onClick={() => { setActiveSection("technical"); setActiveQuestionIndex(0) }}
-                        >
-                            <span className="icon">💻</span>
-                            Technical Questions
-                            <span className="count">{currentReport.technicalQuestions?.length || 0}</span>
-                        </button>
-                        <button
-                            className={activeSection === "behavioral" ? "active" : ""}
-                            onClick={() => { setActiveSection("behavioral"); setActiveQuestionIndex(0) }}
-                        >
-                            <span className="icon">🤝</span>
-                            Behavioral Questions
-                            <span className="count">{currentReport.behavioralQuestions?.length || 0}</span>
-                        </button>
-                        <button
-                            className={activeSection === "roadmap" ? "active" : ""}
-                            onClick={() => setActiveSection("roadmap")}
-                        >
-                            <span className="icon">🗺️</span>
-                            Road Map
-                        </button>
+                        {Object.entries(sectionConfig).map(([key, config]) => (
+                            <button
+                                key={key}
+                                className={activeSection === key ? "active" : ""}
+                                onClick={() => switchSection(key)}
+                            >
+                                <span className="icon">{config.icon}</span>
+                                <span>{config.navLabel}</span>
+                                {key !== "roadmap" && (
+                                    <span className="count">
+                                        {key === "technical" ? technicalQuestions.length : behavioralQuestions.length}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
                     </nav>
                 </aside>
 
-                {/* Main Content */}
-                <div className="main-content">
-                    {renderContent()}
-                </div>
+                <section className="main-content">
+                    <header className="content-header">
+                        <div>
+                            <p className="panel-kicker">Interview Plan</p>
+                            <h1>{sectionConfig[activeSection].title}</h1>
+                        </div>
+                        <span className="question-count">
+                            {activeCount} {activeSection === "roadmap" ? "days" : "questions"}
+                        </span>
+                    </header>
 
-                {/* Right Sidebar */}
+                    {activeSection === "technical" && renderQuestionList(technicalQuestions, "technical")}
+                    {activeSection === "behavioral" && renderQuestionList(behavioralQuestions, "behavioral")}
+                    {activeSection === "roadmap" && renderRoadmap()}
+                </section>
+
                 <aside className="sidebar-right">
-                    <div className="skill-gaps-panel">
-                        <h3>Skill Gaps</h3>
+                    <section className="score-panel">
+                        <p className="panel-kicker">Match Score</p>
+                        <div className="score-ring" style={{ "--score": `${score}%` }}>
+                            <strong>{score}</strong>
+                            <span>%</span>
+                        </div>
+                        <p className="score-tone">{getScoreTone(score)}</p>
+                    </section>
+
+                    <section className="skill-gaps-panel">
+                        <p className="panel-kicker">Skill Gaps</p>
                         <div className="gaps-list">
                             {currentReport.skillGaps && currentReport.skillGaps.length > 0 ? (
-                                currentReport.skillGaps.map((gap, i) => (
-                                    <div key={i} className={`gap-item severity-${gap.severity}`}>
-                                        <span className="gap-skill">{gap.skill}</span>
-                                        <span className={`gap-badge ${gap.severity}`}>{gap.severity}</span>
+                                currentReport.skillGaps.map((gap, index) => (
+                                    <div key={`${gap.skill}-${index}`} className={`gap-item severity-${gap.severity}`}>
+                                        <span>{gap.skill}</span>
                                     </div>
                                 ))
                             ) : (
-                                <p style={{ fontSize: "0.8rem", color: "#666" }}>No skill gaps identified.</p>
+                                <p className="empty-state compact">No skill gaps identified.</p>
                             )}
                         </div>
-                        <div className="legend">
-                            <span className="legend-item"><span className="dot high" />High = Core requirement</span>
-                            <span className="legend-item"><span className="dot medium" />Medium = Disadvantage</span>
-                            <span className="legend-item"><span className="dot low" />Low = Nice-to-have</span>
-                        </div>
-                    </div>
+                    </section>
                 </aside>
-
             </div>
-
         </main>
     )
 }

@@ -4,21 +4,27 @@ import "../auth.form.scss"
 import { useAuth } from '../hooks/useAuth'
 
 const Register = () => {
-
-    
     const { loading, handleRegister } = useAuth()
     const navigate = useNavigate()
     const [username, setUsername] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [error, setError] = useState("")
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError("")
+
+        if (password.length < 8) {
+            setError("Password must be at least 8 characters.")
+            return
+        }
+
         try {
             await handleRegister({ username, email, password })
             navigate("/")
         } catch (err) {
-            console.log(err)
+            setError(err.response?.data?.message || "Registration failed. Please try again.")
         }
     }
 
@@ -30,6 +36,7 @@ const Register = () => {
         <main>
             <div className="form-container">
                 <h1>Register</h1>
+                {error && <p className="auth-error">{error}</p>}
 
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
@@ -37,7 +44,7 @@ const Register = () => {
                         <input
                             onChange={(e) => setUsername(e.target.value)}
                             value={username}
-                            type="text" id="username" name="username" placeholder="Enter username" />
+                            type="text" id="username" name="username" placeholder="Enter username" autoComplete="username" />
                     </div>
 
                     <div className="input-group">
@@ -45,7 +52,7 @@ const Register = () => {
                         <input
                             onChange={(e) => setEmail(e.target.value)}
                             value={email}
-                            type="email" id="email" name="email" placeholder="Enter email address" />
+                            type="email" id="email" name="email" placeholder="Enter email address" autoComplete="email" />
                     </div>
 
                     <div className="input-group">
@@ -53,7 +60,8 @@ const Register = () => {
                         <input
                             onChange={(e) => setPassword(e.target.value)}
                             value={password}
-                            type="password" id="password" name="password" placeholder="Enter your password" />
+                            type="password" id="password" name="password" placeholder="Enter your password" autoComplete="new-password" />
+                        <small>Password needs uppercase, lowercase, and a number.</small>
                     </div>
 
                     <button className="button primary-button" type="submit">Register</button>
