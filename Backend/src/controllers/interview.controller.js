@@ -1,4 +1,4 @@
-const pdfParse = require("pdf-parse")
+const { PDFParse } = require("pdf-parse")
 const { generateInterviewReport } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
 
@@ -20,11 +20,15 @@ async function generateInterViewReportController(req, res) {
         let resumeContent = ""
         if (req.file) {
             console.log("📄 Parsing PDF resume...")
+            let parser
             try {
-                const pdfData = await pdfParse(req.file.buffer)
+                parser = new PDFParse({ data: req.file.buffer })
+                const pdfData = await parser.getText()
                 resumeContent = pdfData.text
             } catch {
                 return res.status(400).json({ message: "Could not read that PDF. Please upload a text-based PDF or use self-description." })
+            } finally {
+                await parser?.destroy?.()
             }
         }
 
