@@ -20,8 +20,12 @@ async function generateInterViewReportController(req, res) {
         let resumeContent = ""
         if (req.file) {
             console.log("📄 Parsing PDF resume...")
-            const pdfData = await pdfParse(req.file.buffer)
-            resumeContent = pdfData.text
+            try {
+                const pdfData = await pdfParse(req.file.buffer)
+                resumeContent = pdfData.text
+            } catch {
+                return res.status(400).json({ message: "Could not read that PDF. Please upload a text-based PDF or use self-description." })
+            }
         }
 
         console.log("🤖 Generating AI report...")

@@ -11,6 +11,84 @@ function clientSafeError(message) {
     return error
 }
 
+function parseJsonContent(content) {
+    const raw = Array.isArray(content)
+        ? content.map((part) => part.text || "").join("")
+        : String(content || "")
+
+    const cleaned = raw
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, "")
+
+    return JSON.parse(cleaned)
+}
+
+function normalizeSeverity(severity) {
+    return ["low", "medium", "high"].includes(severity) ? severity : "medium"
+}
+
+function normalizeQuestions(questions, type) {
+    const fallbackAnswer = type === "behavioral"
+        ? "A strong answer should describe the Situation, Task, Action, and Result clearly. Connect the example to the role requirements and highlight measurable impact. End by explaining what you learned and how you would apply it in this job."
+        : "A strong answer should explain the concept, describe the trade-offs, and connect the solution to the job requirements. Include a practical example from your experience or a realistic project scenario. Close with how you would validate the result in production."
+
+    const normalized = Array.isArray(questions)
+        ? questions.map((question) => ({
+            question: String(question?.question || `${type === "behavioral" ? "Behavioral" : "Technical"} interview question`).trim(),
+            intention: String(question?.intention || "Assess role fit and readiness for the target job.").trim(),
+            answer: String(question?.answer || fallbackAnswer).trim()
+        }))
+        : []
+
+    while (normalized.length < 5) {
+        normalized.push({
+            question: `${type === "behavioral" ? "Behavioral" : "Technical"} interview question ${normalized.length + 1}`,
+            intention: "Assess role fit and readiness for the target job.",
+            answer: fallbackAnswer
+        })
+    }
+
+    return normalized.slice(0, 5)
+}
+
+function normalizeReport(report) {
+    const matchScore = Math.max(0, Math.min(100, Number(report?.matchScore) || 0))
+
+    const skillGaps = Array.isArray(report?.skillGaps)
+        ? report.skillGaps.slice(0, 5).map((gap) => ({
+            skill: String(gap?.skill || "Role-specific skill").trim(),
+            severity: normalizeSeverity(gap?.severity)
+        }))
+        : []
+
+    const preparationPlan = Array.isArray(report?.preparationPlan)
+        ? report.preparationPlan.slice(0, 7).map((day, index) => ({
+            day: Number(day?.day) || index + 1,
+            focus: String(day?.focus || "Targeted interview preparation").trim(),
+            tasks: Array.isArray(day?.tasks) && day.tasks.length > 0
+                ? day.tasks.map((task) => String(task).trim()).filter(Boolean)
+                : ["Review the job description", "Practice one relevant answer", "Note improvements for the next session"]
+        }))
+        : []
+
+    while (preparationPlan.length < 7) {
+        preparationPlan.push({
+            day: preparationPlan.length + 1,
+            focus: preparationPlan.length === 6 ? "Mock interview and revision" : "Targeted interview preparation",
+            tasks: ["Review the job description", "Practice one relevant answer", "Note improvements for the next session"]
+        })
+    }
+
+    return {
+        matchScore,
+        technicalQuestions: normalizeQuestions(report?.technicalQuestions, "technical"),
+        behavioralQuestions: normalizeQuestions(report?.behavioralQuestions, "behavioral"),
+        skillGaps,
+        preparationPlan
+    }
+}
+
 // ── Zod schema with descriptions ─────────────────────────────────────────────
 
 const QuestionSchema = z.object({
@@ -66,18 +144,33 @@ async function generateInterviewReport({ jobDescription, resume = "", selfDescri
 
     const userPrompt = `Job Description:\n${jobDescription}\n\nResume:\n${resume || "Not provided"}\n\nSelf Description:\n${selfDescription || "Not provided"}`
 
-    const response = await mistral.chat.complete({
-        model: "mistral-large-latest",
-        messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user",   content: userPrompt }
-        ],
-        responseFormat: { type: "json_object" }
-    })
+    let response
+    try {
+        response = await mistral.chat.complete({
+            model: "mistral-large-latest",
+            messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user",   content: userPrompt }
+            ],
+            responseFormat: { type: "json_object" }
+        })
+    } catch (err) {
+        throw clientSafeError(`Mistral request failed: ${err.message}`)
+    }
 
-    const raw = response.choices[0].message.content
-    const parsed = JSON.parse(raw)
-    const validated = InterviewReportSchema.parse(parsed)
+    const raw = response.choices?.[0]?.message?.content
+    if (!raw) {
+        throw clientSafeError("Mistral returned an empty response")
+    }
+
+    let parsed
+    try {
+        parsed = parseJsonContent(raw)
+    } catch {
+        throw clientSafeError("Mistral returned invalid JSON. Please try again.")
+    }
+
+    const validated = InterviewReportSchema.parse(normalizeReport(parsed))
 
     console.log("✅ AI report generated and validated")
     return validated
