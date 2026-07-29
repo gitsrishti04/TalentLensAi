@@ -29,6 +29,10 @@ const Home = () => {
 
     const handleSubmit = async () => {
         if (!jobDescription.trim()) return
+        if (!resumeFile && !selfDescription.trim()) {
+            setError("Please upload a resume or add a quick self-description.")
+            return
+        }
         setError("")
 
         // build multipart form data
@@ -41,7 +45,7 @@ const Home = () => {
             const report = await handleGenerateReport(formData)
             navigate(`/interview/${report._id}`)
         } catch (err) {
-            setError("Failed to generate report. Please try again.")
+            setError(err.response?.data?.message || "Failed to generate report. Please try again.")
             console.error(err)
         }
     }

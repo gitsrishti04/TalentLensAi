@@ -11,7 +11,7 @@ const Interview = () => {
 
     useEffect(() => {
         handleGetReportById(id)
-    }, [id])
+    }, [id, handleGetReportById])
 
     if (loading || !currentReport) {
         return (

@@ -13,6 +13,9 @@ async function generateInterViewReportController(req, res) {
         if (!jobDescription) {
             return res.status(400).json({ message: "Job description is required" })
         }
+        if (!req.file && !selfDescription?.trim()) {
+            return res.status(400).json({ message: "Resume or self description is required" })
+        }
 
         let resumeContent = ""
         if (req.file) {
@@ -49,7 +52,10 @@ async function generateInterViewReportController(req, res) {
     } catch (err) {
         console.error("❌ Error in generateInterViewReportController:")
         console.error(err)
-        return res.status(500).json({ message: "Internal server error", error: err.message })
+        return res.status(500).json({
+            message: err.isClientSafe ? err.message : "Failed to generate interview report",
+            error: err.message
+        })
     }
 }
 

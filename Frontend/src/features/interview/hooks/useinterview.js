@@ -1,5 +1,5 @@
-import { useContext } from "react"
-import { InterviewContext } from "../interview.context"
+import { useCallback, useContext } from "react"
+import { InterviewContext } from "../interview-context"
 import { generateReport, getReportById, getAllReports } from "../services/interview.api"
 
 export const useInterview = () => {
@@ -11,7 +11,7 @@ export const useInterview = () => {
 
     const { reports, setReports, currentReport, setCurrentReport, loading, setLoading } = context
 
-    const handleGenerateReport = async (formData) => {
+    const handleGenerateReport = useCallback(async (formData) => {
         setLoading(true)
         try {
             const data = await generateReport(formData)
@@ -23,9 +23,9 @@ export const useInterview = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [setCurrentReport, setLoading])
 
-    const handleGetReportById = async (id) => {
+    const handleGetReportById = useCallback(async (id) => {
         setLoading(true)
         try {
             const data = await getReportById(id)
@@ -37,9 +37,9 @@ export const useInterview = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [setCurrentReport, setLoading])
 
-    const handleGetAllReports = async () => {
+    const handleGetAllReports = useCallback(async () => {
         setLoading(true)
         try {
             const data = await getAllReports()
@@ -51,7 +51,7 @@ export const useInterview = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [setReports, setLoading])
 
     return {
         reports,

@@ -5,6 +5,12 @@ const mistral = new Mistral({
     apiKey: process.env.MISTRAL_API_KEY
 })
 
+function clientSafeError(message) {
+    const error = new Error(message)
+    error.isClientSafe = true
+    return error
+}
+
 // ── Zod schema with descriptions ─────────────────────────────────────────────
 
 const QuestionSchema = z.object({
@@ -54,6 +60,10 @@ Rules:
 // ── Main function ─────────────────────────────────────────────────────────────
 
 async function generateInterviewReport({ jobDescription, resume = "", selfDescription = "" }) {
+    if (!process.env.MISTRAL_API_KEY) {
+        throw clientSafeError("MISTRAL_API_KEY is missing in Backend/.env")
+    }
+
     const userPrompt = `Job Description:\n${jobDescription}\n\nResume:\n${resume || "Not provided"}\n\nSelf Description:\n${selfDescription || "Not provided"}`
 
     const response = await mistral.chat.complete({
