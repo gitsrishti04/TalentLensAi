@@ -1,0 +1,279 @@
+.home {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.5rem 2rem;
+    gap: 2rem;
+    background-color: #0f0f0f;
+    color: whitesmoke;
+
+    // ── Hero ────────────────────────────────────────────────────
+    .hero {
+        text-align: center;
+        max-width: 600px;
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 0.75rem;
+
+            .accent {
+                color: #e91e8c;
+            }
+        }
+
+        p {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+    }
+
+    // ── Two-column card ─────────────────────────────────────────
+    .input-card {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0;
+        width: 100%;
+        max-width: 900px;
+        background-color: #1a1a1a;
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 1px solid #2a2a2a;
+    }
+
+    .card-left,
+    .card-right {
+        flex: 1;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .card-left {
+        border-right: 1px solid #2a2a2a;
+
+        textarea {
+            flex: 1;
+            min-height: 340px;
+            resize: none;
+        }
+
+        .char-count {
+            font-size: 0.75rem;
+            color: #555;
+            text-align: right;
+        }
+    }
+
+    .card-right {
+        gap: 0.85rem;
+    }
+
+    // ── Card header ─────────────────────────────────────────────
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+
+        h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+
+            &.red  { background-color: #e91e8c; }
+            &.pink { background-color: #e91e8c; }
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            background-color: #2a2a2a;
+            color: #e91e8c;
+            border: 1px solid #e91e8c44;
+        }
+    }
+
+    // ── Shared textarea ─────────────────────────────────────────
+    textarea {
+        width: 100%;
+        background-color: #111;
+        border: 1px solid #2a2a2a;
+        border-radius: 0.6rem;
+        padding: 0.75rem 1rem;
+        color: whitesmoke;
+        font-family: inherit;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        outline: none;
+        transition: border-color 0.2s;
+
+        &:focus {
+            border-color: #e91e8c66;
+        }
+
+        &::placeholder {
+            color: #444;
+        }
+    }
+
+    .self-desc {
+        min-height: 100px;
+        resize: none;
+    }
+
+    // ── Section label ────────────────────────────────────────────
+    .section-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #ccc;
+
+        .optional {
+            font-weight: 400;
+            color: #555;
+            margin-left: 0.4rem;
+            font-size: 0.78rem;
+        }
+    }
+
+    // ── Drop zone ────────────────────────────────────────────────
+    .drop-zone {
+        border: 2px dashed #2a2a2a;
+        border-radius: 0.75rem;
+        padding: 2rem 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        transition: border-color 0.2s, background-color 0.2s;
+        background-color: #111;
+        text-align: center;
+
+        &:hover,
+        &.dragging {
+            border-color: #e91e8c;
+            background-color: #1e0f18;
+        }
+
+        &.has-file {
+            border-color: #2ecc71;
+            background-color: #0d1f14;
+        }
+
+        .upload-icon {
+            font-size: 1.8rem;
+        }
+
+        .upload-text {
+            font-size: 0.85rem;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .upload-hint {
+            font-size: 0.75rem;
+            color: #555;
+        }
+    }
+
+    // ── OR divider ───────────────────────────────────────────────
+    .or-divider {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #444;
+        font-size: 0.8rem;
+
+        &::before,
+        &::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background-color: #2a2a2a;
+        }
+    }
+
+    // ── Info note ────────────────────────────────────────────────
+    .info-note {
+        font-size: 0.78rem;
+        color: #888;
+        background-color: #1e1e2e;
+        border: 1px solid #2a2a3a;
+        border-radius: 0.5rem;
+        padding: 0.6rem 0.85rem;
+        line-height: 1.5;
+
+        strong {
+            color: #ccc;
+        }
+    }
+
+    // ── CTA section ──────────────────────────────────────────────
+    .cta-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+        max-width: 900px;
+
+        .cta-hint {
+            font-size: 0.8rem;
+            color: #555;
+        }
+    }
+
+    .generate-btn {
+        background: linear-gradient(135deg, #e91e8c, #c2185b);
+        color: white;
+        border: none;
+        border-radius: 2rem;
+        padding: 0.85rem 2.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+        transition: opacity 0.2s, transform 0.1s;
+
+        &:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    }
+
+    // ── Footer links ─────────────────────────────────────────────
+    .footer-links {
+        display: flex;
+        gap: 1.5rem;
+
+        a {
+            font-size: 0.78rem;
+            color: #444;
+            text-decoration: none;
+            transition: color 0.2s;
+
+            &:hover {
+                color: #888;
+            }
+        }
+    }
+}
